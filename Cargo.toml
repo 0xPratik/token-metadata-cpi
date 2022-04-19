@@ -1,0 +1,10 @@
+[package]
+name = "mpl-cpi"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anchor-lang = "0.24.2"
+mpl-token-metadata = {version = "1.2.7", features = ["no-entrypoint"]}
