@@ -253,3 +253,48 @@ pub struct CreateMasterEdition<'info> {
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>,
 }
+
+pub fn create_master_edition_v3<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, CreateMasterEditionV3<'info>>,
+    max_supply: u64,
+) -> Result<()> {
+    let ix = instruction::create_master_edition_v3(
+        mpl_token_metadata::ID,
+        ctx.accounts.edition.key(),
+        ctx.accounts.mint.key(),
+        ctx.accounts.update_authority.key(),
+        ctx.accounts.mint_authority.key(),
+        ctx.accounts.metadata.key(),
+        ctx.accounts.payer.key(),
+        Some(max_supply),
+    );
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.edition,
+            ctx.accounts.mint,
+            ctx.accounts.update_authority,
+            ctx.accounts.mint_authority,
+            ctx.accounts.payer,
+            ctx.accounts.metadata,
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct CreateMasterEditionV3<'info> {
+    pub edition: AccountInfo<'info>,
+    pub mint: AccountInfo<'info>,
+    pub update_authority: AccountInfo<'info>,
+    pub mint_authority: AccountInfo<'info>,
+    pub metadata: AccountInfo<'info>,
+    pub payer: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>,
+}
