@@ -1,5 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_lang::{solana_program, Result};
+use anchor_spl::{
+    associated_token::{self, AssociatedToken, Create},
+    token::{self, Mint, MintTo, Token},
+};
 use mpl_token_metadata::instruction;
 use mpl_token_metadata::state::Collection;
 use mpl_token_metadata::state::Creator;
@@ -203,4 +207,49 @@ pub struct UpdatePrimarySaleHappenedViaToken<'info> {
     pub metadata_account: AccountInfo<'info>,
     pub owner: AccountInfo<'info>,
     pub token: AccountInfo<'info>,
+}
+
+pub fn create_master_edition<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, CreateMasterEdition<'info>>,
+    max_supply: u64,
+) -> Result<()> {
+    let ix = instruction::create_master_edition(
+        mpl_token_metadata::ID,
+        ctx.accounts.edition.key(),
+        ctx.accounts.mint.key(),
+        ctx.accounts.update_authority.key(),
+        ctx.accounts.mint_authority.key(),
+        ctx.accounts.metadata.key(),
+        ctx.accounts.payer.key(),
+        Some(max_supply),
+    );
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.edition,
+            ctx.accounts.mint,
+            ctx.accounts.update_authority,
+            ctx.accounts.mint_authority,
+            ctx.accounts.payer,
+            ctx.accounts.metadata,
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct CreateMasterEdition<'info> {
+    pub edition: AccountInfo<'info>,
+    pub mint: AccountInfo<'info>,
+    pub update_authority: AccountInfo<'info>,
+    pub mint_authority: AccountInfo<'info>,
+    pub metadata: AccountInfo<'info>,
+    pub payer: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>,
 }
