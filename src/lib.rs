@@ -380,7 +380,6 @@ pub struct CreateMasterEditionV3<'info> {
 
 pub fn sign_metadata<'a, 'b, 'c, 'info>(
     ctx: CpiContext<'a, 'b, 'c, 'info, SignMetadata<'info>>,
-    max_supply: u64,
 ) -> Result<()> {
     let ix = instruction::sign_metadata(
         mpl_token_metadata::ID,
@@ -403,7 +402,6 @@ pub struct SignMetadata<'info> {
 
 pub fn remove_creator_verification<'a, 'b, 'c, 'info>(
     ctx: CpiContext<'a, 'b, 'c, 'info, RemoveCreatorVerification<'info>>,
-    max_supply: u64,
 ) -> Result<()> {
     let ix = instruction::remove_creator_verification(
         mpl_token_metadata::ID,
@@ -426,7 +424,6 @@ pub struct RemoveCreatorVerification<'info> {
 
 pub fn convert_master_edition_v1_to_v2<'a, 'b, 'c, 'info>(
     ctx: CpiContext<'a, 'b, 'c, 'info, ConvertMasterEditionV1toV2<'info>>,
-    max_supply: u64,
 ) -> Result<()> {
     let ix = instruction::convert_master_edition_v1_to_v2(
         mpl_token_metadata::ID,
@@ -455,7 +452,6 @@ pub struct ConvertMasterEditionV1toV2<'info> {
 
 pub fn verify_collection<'a, 'b, 'c, 'info>(
     ctx: CpiContext<'a, 'b, 'c, 'info, VerifyCollection<'info>>,
-    max_supply: u64,
 ) -> Result<()> {
     let ix = instruction::verify_collection(
         mpl_token_metadata::ID,
@@ -492,4 +488,100 @@ pub struct VerifyCollection<'info> {
     pub collection: AccountInfo<'info>,
     pub collection_master_edition_account: AccountInfo<'info>,
     pub collection_authority_record: AccountInfo<'info>,
+}
+
+pub fn unverify_collection<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, UnverifyCollection<'info>>,
+) -> Result<()> {
+    let ix = instruction::unverify_collection(
+        mpl_token_metadata::ID,
+        ctx.accounts.metadata.key(),
+        ctx.accounts.collection_authority.key(),
+        ctx.accounts.collection_mint.key(),
+        ctx.accounts.collection.key(),
+        ctx.accounts.collection_master_edition_account.key(),
+        Some(ctx.accounts.collection_authority_record.key()),
+    );
+
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.metadata,
+            ctx.accounts.collection_authority,
+            ctx.accounts.collection_mint,
+            ctx.accounts.collection,
+            ctx.accounts.collection_master_edition_account,
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct UnverifyCollection<'info> {
+    pub metadata: AccountInfo<'info>,
+    pub collection_authority: AccountInfo<'info>,
+    pub collection_mint: AccountInfo<'info>,
+    pub collection: AccountInfo<'info>,
+    pub collection_master_edition_account: AccountInfo<'info>,
+    pub collection_authority_record: AccountInfo<'info>,
+}
+
+pub fn utilize<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, Utilize<'info>>,
+    number_of_uses: u64,
+) -> Result<()> {
+    let ix = instruction::utilize(
+        mpl_token_metadata::ID,
+        ctx.accounts.metadata.key(),
+        ctx.accounts.token_account.key(),
+        ctx.accounts.mint.key(),
+        Some(ctx.accounts.use_authority_record_pda.key()),
+        ctx.accounts.use_authority.key(),
+        ctx.accounts.owner.key(),
+        Some(ctx.accounts.burner.key()),
+        number_of_uses,
+    );
+
+    // AccountMeta::new(metadata, false),
+    // AccountMeta::new(token_account, false),
+    // AccountMeta::new(mint, false),
+    // AccountMeta::new(use_authority, true),
+    // AccountMeta::new_readonly(owner, false),
+    // AccountMeta::new_readonly(spl_token::id(), false),
+    // AccountMeta::new_readonly(spl_associated_token_account::id(), false),
+    // AccountMeta::new_readonly(solana_program::system_program::id(), false),
+    // AccountMeta::new_readonly(sysvar::rent::id(), false),
+
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.metadata,
+            ctx.accounts.token_account,
+            ctx.accounts.mint,
+            ctx.accounts.use_authority,
+            ctx.accounts.owner,
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.associated_token.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct Utilize<'info> {
+    pub metadata: AccountInfo<'info>,
+    pub token_account: AccountInfo<'info>,
+    pub mint: AccountInfo<'info>,
+    pub use_authority_record_pda: AccountInfo<'info>,
+    pub use_authority: AccountInfo<'info>,
+    pub owner: AccountInfo<'info>,
+    pub burner: AccountInfo<'info>,
+    pub associated_token: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>,
 }
