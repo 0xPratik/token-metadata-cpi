@@ -12,6 +12,10 @@ use mpl_token_metadata::state::DataV2;
 
 use mpl_token_metadata::state::Uses;
 pub use mpl_token_metadata::ID;
+
+pub const PREFIX: &str = "metadata";
+pub const EDITION: &str = "edition";
+pub const EDITION_MARKER_BIT_SIZE: u64 = 248;
 // use std::ops::Deref;
 pub fn create_metadata_accounts_v2<'a, 'b, 'c, 'info>(
     ctx: CpiContext<'a, 'b, 'c, 'info, CreateMetadataAccountV2<'info>>,
@@ -297,4 +301,195 @@ pub struct CreateMasterEditionV3<'info> {
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>,
+}
+
+// pub fn mint_new_edition_from_master_edition_via_token<'a, 'b, 'c, 'info>(
+//     ctx: CpiContext<'a, 'b, 'c, 'info, MintNewEditionFromMasterEditionViaToken<'info>>,
+//     edition: u64,
+// ) -> Result<()> {
+//     let ix = instruction::mint_new_edition_from_master_edition_via_token(
+//         mpl_token_metadata::ID,
+//        ctx.accounts.new_metadata.key(),
+//        ctx.accounts.new_edition.key(),
+//        ctx.accounts.master_edition.key(),
+//        ctx.accounts.new_mint.key(),
+//        ctx.accounts.new_mint_authority.key(),
+//        ctx.accounts.payer.key(),
+//        ctx.accounts.token_account_owner.key(),
+//        ctx.accounts.token_account.key(),
+//        ctx.accounts.new_metadata_update_authority.key(),
+//        ctx.accounts.metadata.key(),
+//        ctx.accounts.metadata_mint.key(),
+//        edition
+//     );
+//     let edition_number = edition.checked_div(EDITION_MARKER_BIT_SIZE).unwrap();
+//     let as_string = edition_number.to_string();
+//     let (edition_mark_pda, _) = Pubkey::find_program_address(
+//         &[
+//             PREFIX.as_bytes(),
+//             mpl_token_metadata::ID.as_ref(),
+//             ctx.accounts.metadata_mint.key().as_ref(),
+//             EDITION.as_bytes(),
+//             as_string.as_bytes(),
+//         ],
+//         &mpl_token_metadata::ID,
+//     );
+//     // AccountMeta::new(new_metadata, false),
+//     // AccountMeta::new(new_edition, false),
+//     // AccountMeta::new(master_edition, false),
+//     // AccountMeta::new(new_mint, false),
+//     // AccountMeta::new(edition_mark_pda, false),
+//     // AccountMeta::new_readonly(new_mint_authority, true),
+//     // AccountMeta::new(payer, true),
+//     // AccountMeta::new_readonly(token_account_owner, true),
+//     // AccountMeta::new_readonly(token_account, false),
+//     // AccountMeta::new_readonly(new_metadata_update_authority, false),
+//     // AccountMeta::new_readonly(metadata, false),
+//     // AccountMeta::new_readonly(spl_token::id(), false),
+//     // AccountMeta::new_readonly(solana_program::system_program::id(), false),
+//     // AccountMeta::new_readonly(sysvar::rent::id(), false),
+//     solana_program::program::invoke_signed(
+//         &ix,
+//         &[
+//            ctx.accounts.new_metadata,
+//             ctx.accounts.new_edition,
+//             ctx.accounts.master_edition,
+//             ctx.accounts.new_mint,
+//             edition_mark_pda.clone(),
+
+//         ],
+//         ctx.signer_seeds,
+//     )
+//     .map_err(Into::into)
+// }
+
+// #[derive(Accounts)]
+// pub struct MintNewEditionFromMasterEditionViaToken<'info> {
+//     pub new_metadata: AccountInfo<'info>,
+//     pub new_edition: AccountInfo<'info>,
+//     pub master_edition: AccountInfo<'info>,
+//     pub new_mint: AccountInfo<'info>,
+//     pub new_mint_authority: AccountInfo<'info>,
+//     pub payer: AccountInfo<'info>,
+//     pub token_account_owner: AccountInfo<'info>,
+//     pub token_account: AccountInfo<'info>,
+//     pub new_metadata_update_authority: AccountInfo<'info>,
+//     pub metadata: AccountInfo<'info>,
+//     pub metadata_mint: AccountInfo<'info>
+// }
+
+pub fn sign_metadata<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, SignMetadata<'info>>,
+    max_supply: u64,
+) -> Result<()> {
+    let ix = instruction::sign_metadata(
+        mpl_token_metadata::ID,
+        ctx.accounts.metadata.key(),
+        ctx.accounts.creator.key(),
+    );
+    solana_program::program::invoke_signed(
+        &ix,
+        &[ctx.accounts.metadata, ctx.accounts.creator],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct SignMetadata<'info> {
+    pub metadata: AccountInfo<'info>,
+    pub creator: AccountInfo<'info>,
+}
+
+pub fn remove_creator_verification<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, RemoveCreatorVerification<'info>>,
+    max_supply: u64,
+) -> Result<()> {
+    let ix = instruction::remove_creator_verification(
+        mpl_token_metadata::ID,
+        ctx.accounts.metadata.key(),
+        ctx.accounts.creator.key(),
+    );
+    solana_program::program::invoke_signed(
+        &ix,
+        &[ctx.accounts.metadata, ctx.accounts.creator],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct RemoveCreatorVerification<'info> {
+    pub metadata: AccountInfo<'info>,
+    pub creator: AccountInfo<'info>,
+}
+
+pub fn convert_master_edition_v1_to_v2<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, ConvertMasterEditionV1toV2<'info>>,
+    max_supply: u64,
+) -> Result<()> {
+    let ix = instruction::convert_master_edition_v1_to_v2(
+        mpl_token_metadata::ID,
+        ctx.accounts.master_edition.key(),
+        ctx.accounts.one_time_auth.key(),
+        ctx.accounts.printing_mint.key(),
+    );
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.master_edition,
+            ctx.accounts.one_time_auth,
+            ctx.accounts.printing_mint,
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct ConvertMasterEditionV1toV2<'info> {
+    pub master_edition: AccountInfo<'info>,
+    pub one_time_auth: AccountInfo<'info>,
+    pub printing_mint: AccountInfo<'info>,
+}
+
+pub fn verify_collection<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, VerifyCollection<'info>>,
+    max_supply: u64,
+) -> Result<()> {
+    let ix = instruction::verify_collection(
+        mpl_token_metadata::ID,
+        ctx.accounts.metadata.key(),
+        ctx.accounts.collection_authority.key(),
+        ctx.accounts.payer.key(),
+        ctx.accounts.collection_mint.key(),
+        ctx.accounts.collection.key(),
+        ctx.accounts.collection_master_edition_account.key(),
+        Some(ctx.accounts.collection_authority_record.key()),
+    );
+
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.metadata,
+            ctx.accounts.collection_authority,
+            ctx.accounts.payer,
+            ctx.accounts.collection_mint,
+            ctx.accounts.collection,
+            ctx.accounts.collection_master_edition_account,
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct VerifyCollection<'info> {
+    pub metadata: AccountInfo<'info>,
+    pub collection_authority: AccountInfo<'info>,
+    pub payer: AccountInfo<'info>,
+    pub collection_mint: AccountInfo<'info>,
+    pub collection: AccountInfo<'info>,
+    pub collection_master_edition_account: AccountInfo<'info>,
+    pub collection_authority_record: AccountInfo<'info>,
 }
