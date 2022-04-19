@@ -176,3 +176,31 @@ pub struct UpdateMetadataAccountsV2<'info> {
     pub update_authority: AccountInfo<'info>,
     pub new_update_authority: AccountInfo<'info>,
 }
+
+pub fn update_primary_sale_happened_via_token<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, UpdatePrimarySaleHappenedViaToken<'info>>,
+) -> Result<()> {
+    let ix = instruction::update_primary_sale_happened_via_token(
+        mpl_token_metadata::ID,
+        ctx.accounts.metadata_account.key(),
+        ctx.accounts.owner.key(),
+        ctx.accounts.token.key(),
+    );
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.metadata_account,
+            ctx.accounts.owner,
+            ctx.accounts.token,
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct UpdatePrimarySaleHappenedViaToken<'info> {
+    pub metadata_account: AccountInfo<'info>,
+    pub owner: AccountInfo<'info>,
+    pub token: AccountInfo<'info>,
+}
