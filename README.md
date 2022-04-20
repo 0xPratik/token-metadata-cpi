@@ -2,9 +2,7 @@
 This is an Anchor Client for Interacting with the MPL Token Metadata Program.
 
 # Support 
-
-## Consider Supporting us:
-
+ Consider Supporting us:
 - SOL Address : DBcPYyWRE1TPASCLLXim2A1tX8uJacrzU9kqYZ9bio3Y
 
 ## Contributions
