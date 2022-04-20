@@ -795,3 +795,36 @@ pub struct SetAndVerifyCollection<'info> {
     pub collection_master_edition_account: AccountInfo<'info>,
     pub collection_authority_record: AccountInfo<'info>,
 }
+
+pub fn freeze_delegated_account<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, FreezeDelegatedAccount<'info>>,
+) -> Result<()> {
+    let ix = instruction::freeze_delegated_account(
+        mpl_token_metadata::ID,
+        ctx.accounts.delegate.key(),
+        ctx.accounts.token_account.key(),
+        ctx.accounts.edition.key(),
+        ctx.accounts.mint.key(),
+    );
+
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.delegate,
+            ctx.accounts.token_account,
+            ctx.accounts.edition,
+            ctx.accounts.mint,
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct FreezeDelegatedAccount<'info> {
+    pub delegate: AccountInfo<'info>,
+    pub token_account: AccountInfo<'info>,
+    pub edition: AccountInfo<'info>,
+    pub update_authority: AccountInfo<'info>,
+    pub mint: AccountInfo<'info>,
+}
