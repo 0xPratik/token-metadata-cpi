@@ -752,3 +752,46 @@ pub struct RevokeCollectionAuthority<'info> {
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>,
 }
+
+pub fn set_and_verify_collection<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, SetAndVerifyCollection<'info>>,
+) -> Result<()> {
+    let ix = instruction::set_and_verify_collection(
+        mpl_token_metadata::ID,
+        ctx.accounts.metadata.key(),
+        ctx.accounts.collection.key(),
+        ctx.accounts.payer.key(),
+        ctx.accounts.update_authority.key(),
+        ctx.accounts.collection_mint.key(),
+        ctx.accounts.collection.key(),
+        ctx.accounts.collection_master_edition_account.key(),
+        Some(ctx.accounts.collection_authority_record.key()),
+    );
+
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.metadata,
+            ctx.accounts.collection_authority,
+            ctx.accounts.payer,
+            ctx.accounts.update_authority,
+            ctx.accounts.collection_mint,
+            ctx.accounts.collection,
+            ctx.accounts.collection_master_edition_account,
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct SetAndVerifyCollection<'info> {
+    pub metadata: AccountInfo<'info>,
+    pub collection_authority: AccountInfo<'info>,
+    pub payer: AccountInfo<'info>,
+    pub update_authority: AccountInfo<'info>,
+    pub collection_mint: AccountInfo<'info>,
+    pub collection: AccountInfo<'info>,
+    pub collection_master_edition_account: AccountInfo<'info>,
+    pub collection_authority_record: AccountInfo<'info>,
+}
