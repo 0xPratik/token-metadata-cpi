@@ -543,16 +543,6 @@ pub fn utilize<'a, 'b, 'c, 'info>(
         number_of_uses,
     );
 
-    // AccountMeta::new(metadata, false),
-    // AccountMeta::new(token_account, false),
-    // AccountMeta::new(mint, false),
-    // AccountMeta::new(use_authority, true),
-    // AccountMeta::new_readonly(owner, false),
-    // AccountMeta::new_readonly(spl_token::id(), false),
-    // AccountMeta::new_readonly(spl_associated_token_account::id(), false),
-    // AccountMeta::new_readonly(solana_program::system_program::id(), false),
-    // AccountMeta::new_readonly(sysvar::rent::id(), false),
-
     solana_program::program::invoke_signed(
         &ix,
         &[
@@ -581,6 +571,183 @@ pub struct Utilize<'info> {
     pub owner: AccountInfo<'info>,
     pub burner: AccountInfo<'info>,
     pub associated_token: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>,
+}
+
+pub fn approve_use_authority<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, ApproveUseAuthority<'info>>,
+    number_of_uses: u64,
+) -> Result<()> {
+    let ix = instruction::approve_use_authority(
+        mpl_token_metadata::ID,
+        ctx.accounts.use_authority_record.key(),
+        ctx.accounts.user.key(),
+        ctx.accounts.owner.key(),
+        ctx.accounts.payer.key(),
+        ctx.accounts.owner_token_account.key(),
+        ctx.accounts.metadata.key(),
+        ctx.accounts.mint.key(),
+        ctx.accounts.burner.key(),
+        number_of_uses,
+    );
+
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.use_authority_record,
+            ctx.accounts.owner,
+            ctx.accounts.payer,
+            ctx.accounts.user,
+            ctx.accounts.owner_token_account,
+            ctx.accounts.metadata.to_account_info(),
+            ctx.accounts.mint.to_account_info(),
+            ctx.accounts.burner.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct ApproveUseAuthority<'info> {
+    pub use_authority_record: AccountInfo<'info>,
+    pub user: AccountInfo<'info>,
+    pub owner: AccountInfo<'info>,
+    pub payer: AccountInfo<'info>,
+    pub owner_token_account: AccountInfo<'info>,
+    pub metadata: AccountInfo<'info>,
+    pub mint: AccountInfo<'info>,
+    pub burner: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>,
+}
+
+pub fn revoke_use_authority<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, RevokeUseAuthority<'info>>,
+) -> Result<()> {
+    let ix = instruction::revoke_use_authority(
+        mpl_token_metadata::ID,
+        ctx.accounts.use_authority_record.key(),
+        ctx.accounts.user.key(),
+        ctx.accounts.owner.key(),
+        ctx.accounts.owner_token_account.key(),
+        ctx.accounts.metadata.key(),
+        ctx.accounts.mint.key(),
+    );
+
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.use_authority_record,
+            ctx.accounts.owner,
+            ctx.accounts.user,
+            ctx.accounts.owner_token_account,
+            ctx.accounts.mint.to_account_info(),
+            ctx.accounts.metadata.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct RevokeUseAuthority<'info> {
+    pub use_authority_record: AccountInfo<'info>,
+    pub user: AccountInfo<'info>,
+    pub owner: AccountInfo<'info>,
+    pub owner_token_account: AccountInfo<'info>,
+    pub metadata: AccountInfo<'info>,
+    pub mint: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>,
+}
+
+pub fn approve_collection_authority<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, ApproveCollectionAuthority<'info>>,
+) -> Result<()> {
+    let ix = instruction::approve_collection_authority(
+        mpl_token_metadata::ID,
+        ctx.accounts.collection_authority_record.key(),
+        ctx.accounts.new_collection_authority.key(),
+        ctx.accounts.update_authority.key(),
+        ctx.accounts.payer.key(),
+        ctx.accounts.metadata.key(),
+        ctx.accounts.mint.key(),
+    );
+
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.collection_authority_record,
+            ctx.accounts.new_collection_authority,
+            ctx.accounts.update_authority,
+            ctx.accounts.payer,
+            ctx.accounts.metadata,
+            ctx.accounts.mint,
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct ApproveCollectionAuthority<'info> {
+    pub collection_authority_record: AccountInfo<'info>,
+    pub new_collection_authority: AccountInfo<'info>,
+    pub update_authority: AccountInfo<'info>,
+    pub payer: AccountInfo<'info>,
+    pub metadata: AccountInfo<'info>,
+    pub mint: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>,
+}
+
+pub fn revoke_collection_authority<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, RevokeCollectionAuthority<'info>>,
+) -> Result<()> {
+    let ix = instruction::revoke_collection_authority(
+        mpl_token_metadata::ID,
+        ctx.accounts.collection_authority_record.key(),
+        ctx.accounts.delegate_authority.key(),
+        ctx.accounts.update_authority.key(),
+        ctx.accounts.metadata.key(),
+        ctx.accounts.mint.key(),
+    );
+
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.collection_authority_record,
+            ctx.accounts.delegate_authority,
+            ctx.accounts.update_authority,
+            ctx.accounts.metadata,
+            ctx.accounts.mint,
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct RevokeCollectionAuthority<'info> {
+    pub collection_authority_record: AccountInfo<'info>,
+    pub delegate_authority: AccountInfo<'info>,
+    pub update_authority: AccountInfo<'info>,
+    pub metadata: AccountInfo<'info>,
+    pub mint: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>,
