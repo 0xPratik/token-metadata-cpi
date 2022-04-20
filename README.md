@@ -1,5 +1,5 @@
-# Anchor Client for mpl-token-metadata program
-This is an Anchor Client for Interacting with the MPL Token Metadata Program
+# Anchor Client 
+This is an Anchor Client for Interacting with the MPL Token Metadata Program.
 
 # Support 
 
@@ -13,4 +13,4 @@ We encourage everyone to contribute, submit issues, PRs, discuss. Every kind of 
 
 ## Maintainers
 
-- Pratik(https://github.com/0xPratik)
+- [Pratik](https://github.com/0xPratik)
