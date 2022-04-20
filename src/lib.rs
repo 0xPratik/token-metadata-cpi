@@ -828,3 +828,36 @@ pub struct FreezeDelegatedAccount<'info> {
     pub update_authority: AccountInfo<'info>,
     pub mint: AccountInfo<'info>,
 }
+
+pub fn thaw_delegated_account<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, ThawDelegatedAccount<'info>>,
+) -> Result<()> {
+    let ix = instruction::thaw_delegated_account(
+        mpl_token_metadata::ID,
+        ctx.accounts.delegate.key(),
+        ctx.accounts.token_account.key(),
+        ctx.accounts.edition.key(),
+        ctx.accounts.mint.key(),
+    );
+
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.delegate,
+            ctx.accounts.token_account,
+            ctx.accounts.edition,
+            ctx.accounts.mint,
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct ThawDelegatedAccount<'info> {
+    pub delegate: AccountInfo<'info>,
+    pub token_account: AccountInfo<'info>,
+    pub edition: AccountInfo<'info>,
+    pub update_authority: AccountInfo<'info>,
+    pub mint: AccountInfo<'info>,
+}
