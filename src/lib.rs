@@ -151,8 +151,6 @@ pub struct UpdateMetadataAccounts<'info> {
     pub metadata_account: AccountInfo<'info>,
     pub update_authority: AccountInfo<'info>,
     pub new_update_authority: AccountInfo<'info>,
-    pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn update_metadata_accounts_v2<'a, 'b, 'c, 'info>(
@@ -420,6 +418,76 @@ pub fn remove_creator_verification<'a, 'b, 'c, 'info>(
 pub struct RemoveCreatorVerification<'info> {
     pub metadata: AccountInfo<'info>,
     pub creator: AccountInfo<'info>,
+}
+
+pub fn mint_edition_from_master_edition_via_vault_proxy<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, MintEditionFromMasterEditionViaVaultProxy<'info>>,
+    edition: u64,
+) -> Result<()> {
+    let ix = instruction::mint_edition_from_master_edition_via_vault_proxy(
+        mpl_token_metadata::ID,
+        ctx.accounts.new_metadata.key(),
+        ctx.accounts.new_edition.key(),
+        ctx.accounts.master_edition.key(),
+        ctx.accounts.new_mint.key(),
+        ctx.accounts.edition_mark_pda.key(),
+        ctx.accounts.new_mint_authority.key(),
+        ctx.accounts.payer.key(),
+        ctx.accounts.vault_authority.key(),
+        ctx.accounts.safety_deposit_store.key(),
+        ctx.accounts.safety_deposit_box.key(),
+        ctx.accounts.vault.key(),
+        ctx.accounts.new_metadata_update_authority.key(),
+        ctx.accounts.metadata.key(),
+        ctx.accounts.token_program.key(),
+        ctx.accounts.token_vault_program_info.key(),
+        edition,
+    );
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.new_metadata,
+            ctx.accounts.new_edition,
+            ctx.accounts.master_edition,
+            ctx.accounts.new_mint,
+            ctx.accounts.edition_mark_pda,
+            ctx.accounts.new_mint_authority,
+            ctx.accounts.payer,
+            ctx.accounts.vault_authority,
+            ctx.accounts.safety_deposit_store,
+            ctx.accounts.safety_deposit_box,
+            ctx.accounts.vault,
+            ctx.accounts.new_metadata_update_authority,
+            ctx.accounts.metadata,
+            ctx.accounts.token_program,
+            ctx.accounts.token_vault_program_info,
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+        ],
+        ctx.signer_seeds,
+    )
+    .map_err(Into::into)
+}
+
+#[derive(Accounts)]
+pub struct MintEditionFromMasterEditionViaVaultProxy<'info> {
+    pub new_metadata: AccountInfo<'info>,
+    pub new_edition: AccountInfo<'info>,
+    pub master_edition: AccountInfo<'info>,
+    pub new_mint: AccountInfo<'info>,
+    pub edition_mark_pda: AccountInfo<'info>,
+    pub new_mint_authority: AccountInfo<'info>,
+    pub payer: AccountInfo<'info>,
+    pub vault_authority: AccountInfo<'info>,
+    pub safety_deposit_store: AccountInfo<'info>,
+    pub safety_deposit_box: AccountInfo<'info>,
+    pub vault: AccountInfo<'info>,
+    pub new_metadata_update_authority: AccountInfo<'info>,
+    pub metadata: AccountInfo<'info>,
+    pub token_program: AccountInfo<'info>,
+    pub token_vault_program_info: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
+    pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn convert_master_edition_v1_to_v2<'a, 'b, 'c, 'info>(
